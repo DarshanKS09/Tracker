@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase";
+import { connectToDatabase } from "@/lib/mongodb";
+import { RoutineLog } from "@/models/routine-log";
 import { ROUTINE_TASKS } from "@/utils/constants";
 import { getDateString } from "@/utils/date";
 
@@ -17,23 +18,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
-  const { error } = await supabase
-    .from("routine_logs")
-    .upsert(
+  try {
+    await connectToDatabase();
+    await RoutineLog.findOneAndUpdate(
+      { date, taskName: body.taskName },
       {
         date,
-        task_name: body.taskName,
+        taskName: body.taskName,
         completed: body.completed,
-        created_at: new Date().toISOString()
+        createdAt: new Date()
       },
       {
-        onConflict: "date,task_name"
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true
       }
     );
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to update routine task.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

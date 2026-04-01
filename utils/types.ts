@@ -1,9 +1,9 @@
 export type RoutineLog = {
   id: string;
   date: string;
-  task_name: string;
+  taskName: string;
   completed: boolean;
-  created_at: string;
+  createdAt: string;
 };
 
 export type DailyTaskItem = {

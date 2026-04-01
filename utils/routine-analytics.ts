@@ -11,7 +11,7 @@ type DaySnapshot = {
 };
 
 export function buildDailyTasks(logs: RoutineLog[], taskNames: readonly string[]) {
-  const taskMap = new Map(logs.map((log) => [log.task_name, log]));
+  const taskMap = new Map(logs.map((log) => [log.taskName, log]));
 
   return taskNames.map((taskName) => {
     const log = taskMap.get(taskName);
@@ -19,7 +19,7 @@ export function buildDailyTasks(logs: RoutineLog[], taskNames: readonly string[]
     return {
       taskName,
       completed: log?.completed ?? false,
-      timestamp: log?.created_at ?? null
+      timestamp: log?.createdAt ?? null
     };
   });
 }
@@ -42,7 +42,7 @@ export function buildWeeklyChartData(logs: RoutineLog[], dates: string[], totalT
   });
 }
 
-export function buildWeeklySummary(chartData: WeeklyChartPoint[], totalTasksPerDay: number): WeeklySummary {
+export function buildWeeklySummary(chartData: WeeklyChartPoint[]): WeeklySummary {
   const totalTasks = chartData.reduce((sum, item) => sum + item.completedTasks, 0);
   const averageCompletion = Math.round(
     chartData.reduce((sum, item) => sum + item.completionPercentage, 0) / chartData.length

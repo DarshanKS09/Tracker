@@ -1,49 +1,28 @@
 # Routine Tracker
 
-A fast MVP for tracking a daily routine checklist with Supabase persistence and a weekly analytics dashboard.
+A fast MVP for tracking a daily routine checklist with MongoDB persistence and a weekly analytics dashboard.
 
 ## Stack
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Supabase
+- MongoDB Atlas
+- Mongoose
 - Recharts
 
-## 1. Create the Supabase table
+## 1. Create the MongoDB Atlas database
 
-Run this SQL in the Supabase SQL editor:
+Create a MongoDB Atlas cluster, then create or use a database named `routine-tracker`.
 
-```sql
-create extension if not exists "pgcrypto";
-
-create table if not exists public.routine_logs (
-  id uuid primary key default gen_random_uuid(),
-  date date not null,
-  task_name text not null,
-  completed boolean not null default false,
-  created_at timestamp not null default now()
-);
-
-create unique index if not exists routine_logs_date_task_name_key
-  on public.routine_logs (date, task_name);
-```
-
-Recommended for a simple MVP without auth:
-
-```sql
-alter table public.routine_logs disable row level security;
-```
-
-If you want RLS enabled instead, create insert/select/update policies for your app before using it.
+The app will automatically create the `routinelogs` collection through Mongoose on first write, along with a unique compound index for `{ date, taskName }`.
 
 ## 2. Environment variables
 
-Copy `.env.example` to `.env.local` and fill in your Supabase project values:
+Copy `.env.example` to `.env.local` and fill in your MongoDB Atlas connection string:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/routine-tracker?retryWrites=true&w=majority
 ```
 
 ## 3. Install and run locally
@@ -59,11 +38,12 @@ Open `http://localhost:3000`.
 
 1. Push the project to GitHub.
 2. Import the repo into Vercel.
-3. Add the same `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` environment variables in Vercel.
+3. Add the same `MONGODB_URI` environment variable in Vercel.
 4. Deploy.
 
 ## Notes
 
 - Task toggles are written through `app/api/routine/route.ts`.
+- Dashboard reads can be fetched through `app/api/routine/summary/route.ts`, and the page uses the same server-side data source.
 - The dashboard page is server-rendered and refreshed after each toggle.
 - Weekly streak success is defined as `>= 80%` completion for a day.
