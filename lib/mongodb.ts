@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
+import { getEnv } from "@/lib/env";
 
-const mongodbUri = process.env.MONGODB_URI;
-
-if (!mongodbUri) {
-  throw new Error("Missing MONGODB_URI environment variable.");
-}
+const { mongodbUri, mongodbDbName } = getEnv();
 
 declare global {
   // eslint-disable-next-line no-var
@@ -30,7 +27,7 @@ export async function connectToDatabase() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(mongodbUri, {
-      dbName: "routine-tracker",
+      dbName: mongodbDbName,
       bufferCommands: false
     });
   }

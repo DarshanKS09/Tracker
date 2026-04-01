@@ -1,6 +1,6 @@
 # Routine Tracker
 
-A fast MVP for tracking a daily routine checklist with MongoDB persistence and a weekly analytics dashboard.
+A production-ready MVP for tracking daily routines with MongoDB Atlas, Mongoose, and a responsive Next.js dashboard.
 
 ## Stack
 
@@ -11,21 +11,23 @@ A fast MVP for tracking a daily routine checklist with MongoDB persistence and a
 - Mongoose
 - Recharts
 
-## 1. Create the MongoDB Atlas database
+## Environment Variables
 
-Create a MongoDB Atlas cluster, then create or use a database named `routine-tracker`.
-
-The app will automatically create the `routinelogs` collection through Mongoose on first write, along with a unique compound index for `{ date, taskName }`.
-
-## 2. Environment variables
-
-Copy `.env.example` to `.env.local` and fill in your MongoDB Atlas connection string:
+Copy `.env.example` to `.env.local`.
 
 ```bash
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/routine-tracker?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=routine-tracker
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-## 3. Install and run locally
+What each one does:
+
+- `MONGODB_URI`: your MongoDB Atlas connection string
+- `MONGODB_DB_NAME`: the database name used by the app
+- `NEXT_PUBLIC_APP_URL`: app base URL for local and production setup
+
+## Local Development
 
 ```bash
 npm install
@@ -34,16 +36,42 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## 4. Deploy to Vercel
+## MongoDB Atlas Setup
 
-1. Push the project to GitHub.
-2. Import the repo into Vercel.
-3. Add the same `MONGODB_URI` environment variable in Vercel.
-4. Deploy.
+1. Create a MongoDB Atlas cluster.
+2. Create a database user with read/write access.
+3. In Network Access, allow your local IP for development.
+4. For Vercel deployment, either allow all IPs with `0.0.0.0/0` or use a tighter production rule that matches your deployment approach.
+5. Use the connection string in `MONGODB_URI`.
 
-## Notes
+The app creates the `routinelogs` collection automatically on first write and uses a unique compound index for `{ date, taskName }`.
 
-- Task toggles are written through `app/api/routine/route.ts`.
-- Dashboard reads can be fetched through `app/api/routine/summary/route.ts`, and the page uses the same server-side data source.
-- The dashboard page is server-rendered and refreshed after each toggle.
-- Weekly streak success is defined as `>= 80%` completion for a day.
+## Deploy To Vercel
+
+1. Push the repo to GitHub.
+2. Import the project into Vercel.
+3. In Vercel Project Settings -> Environment Variables, add:
+
+```bash
+MONGODB_URI=your-atlas-uri
+MONGODB_DB_NAME=routine-tracker
+NEXT_PUBLIC_APP_URL=https://your-project-name.vercel.app
+```
+
+4. Redeploy after adding the variables.
+
+## Production Notes
+
+- MongoDB connection settings are centralized in [lib/mongodb.ts](/c:/Users/darsh/OneDrive/Desktop/Tracker/lib/mongodb.ts)
+- Environment validation is in [lib/env.ts](/c:/Users/darsh/OneDrive/Desktop/Tracker/lib/env.ts)
+- Security headers and standalone output are configured in [next.config.ts](/c:/Users/darsh/OneDrive/Desktop/Tracker/next.config.ts)
+- Task updates go through [app/api/routine/route.ts](/c:/Users/darsh/OneDrive/Desktop/Tracker/app/api/routine/route.ts)
+- Weekly streak success is defined as `>= 80%` completion for a day
+
+## Pre-Deploy Checklist
+
+1. Set the three environment variables locally and in Vercel.
+2. Make sure MongoDB Atlas network access allows your deployment.
+3. Run `npm install`.
+4. Run `npm run build`.
+5. Deploy to Vercel.
