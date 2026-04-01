@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { startTransition, ChangeEvent, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { ArrowLeft, Pencil, Plus, Trash2, Upload, UserRound } from "lucide-react";
@@ -26,7 +26,6 @@ export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProp
   const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<RoutineSettings>(settings);
   const backHref = useMemo(() => {
     const date = searchParams.get("date");
@@ -70,7 +69,6 @@ export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProp
   const saveSettings = async () => {
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const response = await fetch("/api/settings", {
@@ -86,8 +84,11 @@ export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProp
         throw new Error(payload.error || "Unable to save settings.");
       }
 
-      setSuccess("Changes saved successfully.");
-      router.refresh();
+      router.prefetch(backHref);
+      startTransition(() => {
+        router.replace(backHref, { scroll: false });
+        router.refresh();
+      });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save settings.");
     } finally {
@@ -304,12 +305,6 @@ export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProp
           {error ? (
             <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-100">
               {error}
-            </div>
-          ) : null}
-
-          {success ? (
-            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              {success}
             </div>
           ) : null}
 

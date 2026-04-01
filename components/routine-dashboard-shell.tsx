@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { DailyChecklist } from "@/components/daily-checklist";
@@ -42,10 +42,16 @@ export function RoutineDashboardShell({
   const [tasks, setTasks] = useState(initialTasks);
   const [mobileView, setMobileView] = useState<"today" | "charts" | "stats">("today");
   const [maxSelectableDate, setMaxSelectableDate] = useState(today);
+  const [displayDate, setDisplayDate] = useState(selectedDate);
+  const [isDatePending, startDateTransition] = useTransition();
 
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
+
+  useEffect(() => {
+    setDisplayDate(selectedDate);
+  }, [selectedDate]);
 
   useEffect(() => {
     setMaxSelectableDate(getDateString(new Date()));
@@ -63,16 +69,23 @@ export function RoutineDashboardShell({
       const nextDate = getDateString(new Date());
       const params = new URLSearchParams(searchParams.toString());
       params.set("date", nextDate);
-      router.replace(`${pathname}?${params.toString()}`);
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     }, nextMidnight.getTime() - now.getTime() + 250);
 
     return () => window.clearTimeout(timeout);
   }, [pathname, router, searchParams, selectedDate]);
 
   const updateSelectedDate = (nextDate: string) => {
+    setDisplayDate(nextDate);
     const params = new URLSearchParams(searchParams.toString());
     params.set("date", nextDate);
-    router.replace(`${pathname}?${params.toString()}`);
+    const href = `${pathname}?${params.toString()}`;
+    router.prefetch(href);
+    startDateTransition(() => {
+      router.replace(href, { scroll: false });
+    });
   };
 
   const completedCount = tasks.filter((task) => task.completed).length;
@@ -91,21 +104,25 @@ export function RoutineDashboardShell({
                 <p className="mt-1 text-xs text-slate-400">Built for quick daily check-ins</p>
               </div>
               <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-200">
-                {percentage}% done
+                {isDatePending ? "Loading" : `${percentage}% done`}
               </div>
             </div>
 
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Active day</p>
-                <p className="mt-1 text-sm font-medium text-white">{formatFullDate(selectedDate)}</p>
+                <p className="mt-1 text-sm font-medium text-white">{formatFullDate(displayDate)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-200">
+                <label
+                  className={`flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-200 transition ${
+                    isDatePending ? "opacity-70" : ""
+                  }`}
+                >
                   <CalendarDays className="h-4 w-4 text-cyan-300" />
                   <input
                     type="date"
-                    value={selectedDate}
+                    value={displayDate}
                     max={maxSelectableDate}
                     onChange={(event) => updateSelectedDate(event.target.value)}
                     className="bg-transparent text-sm text-slate-100 outline-none [&::-webkit-calendar-picker-indicator]:opacity-70"
@@ -115,7 +132,8 @@ export function RoutineDashboardShell({
                 <button
                   type="button"
                   onClick={() => updateSelectedDate(today)}
-                  className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-emerald-200 transition hover:bg-emerald-400/15"
+                  disabled={displayDate === today && isDatePending}
+                  className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-emerald-200 transition hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Today
                 </button>

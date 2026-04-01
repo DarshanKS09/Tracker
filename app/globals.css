@@ -18,6 +18,15 @@ body {
   scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .panel {
   @apply rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-panel;
 }
