@@ -110,20 +110,41 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <span
-                    className={clsx(
-                      "mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200",
-                      task.completed
-                        ? "border-emerald-300 bg-emerald-400 text-surface-950"
-                        : "border-white/20 bg-white/5 text-transparent"
-                    )}
-                  >
-                    {task.taskType === "water" && !task.completed ? (
-                      <Droplets className="h-4 w-4 text-sky-300" />
-                    ) : (
+                  {task.taskType === "boolean" ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdate({
+                          taskName: task.taskName,
+                          completed: !task.completed
+                        })
+                      }
+                      className={clsx(
+                        "mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200",
+                        task.completed
+                          ? "border-emerald-300 bg-emerald-400 text-surface-950"
+                          : "border-white/20 bg-white/5 text-transparent hover:text-slate-500"
+                      )}
+                      aria-label={`${task.completed ? "Unmark" : "Mark"} ${task.taskName}`}
+                    >
                       <Check className="h-4 w-4" />
-                    )}
-                  </span>
+                    </button>
+                  ) : (
+                    <span
+                      className={clsx(
+                        "mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200",
+                        task.completed
+                          ? "border-emerald-300 bg-emerald-400 text-surface-950"
+                          : "border-white/20 bg-white/5 text-transparent"
+                      )}
+                    >
+                      {task.taskType === "water" && !task.completed ? (
+                        <Droplets className="h-4 w-4 text-sky-300" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </span>
+                  )}
                   <div>
                     <p className="font-medium text-white">{task.taskName}</p>
                     <p className="mt-1 text-sm text-slate-300">{task.helperText}</p>
@@ -145,23 +166,16 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                 {isPending ? (
                   <LoaderCircle className="h-4 w-4 animate-spin text-slate-300" />
                 ) : task.taskType === "boolean" ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdate({
-                        taskName: task.taskName,
-                        completed: !task.completed
-                      })
-                    }
+                  <div
                     className={clsx(
-                      "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] transition-colors",
+                      "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
                       task.completed
                         ? "bg-emerald-300/15 text-emerald-200"
                         : "bg-red-300/10 text-red-200"
                     )}
                   >
-                    {task.completed ? "Done" : "Mark done"}
-                  </button>
+                    {task.completed ? "Done" : "Open"}
+                  </div>
                 ) : (
                   <div
                     className={clsx(
