@@ -1,4 +1,4 @@
-import { SUCCESS_THRESHOLD } from "@/utils/constants";
+import { ROUTINE_TASK_CONFIGS, SUCCESS_THRESHOLD } from "@/utils/constants";
 import { formatDayLabel } from "@/utils/date";
 import type { RoutineLog, WeeklyChartPoint, WeeklySummary } from "@/utils/types";
 
@@ -10,15 +10,21 @@ type DaySnapshot = {
   successfulDay: boolean;
 };
 
-export function buildDailyTasks(logs: RoutineLog[], taskNames: readonly string[]) {
+export function buildDailyTasks(logs: RoutineLog[]) {
   const taskMap = new Map(logs.map((log) => [log.taskName, log]));
 
-  return taskNames.map((taskName) => {
-    const log = taskMap.get(taskName);
+  return ROUTINE_TASK_CONFIGS.map((task) => {
+    const log = taskMap.get(task.name);
 
     return {
-      taskName,
+      taskName: task.name,
+      taskType: task.type,
       completed: log?.completed ?? false,
+      target: task.target,
+      unit: task.unit,
+      helperText: task.helperText,
+      value: log?.value ?? 0,
+      options: task.options ?? [],
       timestamp: log?.createdAt ?? null
     };
   });

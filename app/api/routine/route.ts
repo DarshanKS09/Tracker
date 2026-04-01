@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog } from "@/models/routine-log";
-import { ROUTINE_TASKS } from "@/utils/constants";
+import { getTaskCompletion, ROUTINE_TASKS } from "@/utils/constants";
 import { getDateString } from "@/utils/date";
 
 type TogglePayload = {
   taskName?: string;
   completed?: boolean;
+  value?: number;
   date?: string;
 };
 
@@ -14,9 +15,12 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as TogglePayload;
   const date = body.date ?? getDateString();
 
-  if (!body.taskName || !ROUTINE_TASKS.includes(body.taskName) || typeof body.completed !== "boolean") {
+  if (!body.taskName || !ROUTINE_TASKS.includes(body.taskName)) {
     return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
   }
+
+  const nextValue = typeof body.value === "number" ? body.value : null;
+  const nextCompleted = getTaskCompletion(body.taskName, nextValue, body.completed);
 
   try {
     await connectToDatabase();
@@ -25,7 +29,8 @@ export async function POST(request: NextRequest) {
       {
         date,
         taskName: body.taskName,
-        completed: body.completed,
+        completed: nextCompleted,
+        value: nextValue,
         createdAt: new Date()
       },
       {

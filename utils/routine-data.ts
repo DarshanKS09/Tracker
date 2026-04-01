@@ -25,7 +25,7 @@ export async function getRoutinePageData() {
   const todayLogs = serializeRoutineLogs(todayLogsRaw);
   const weekLogs = serializeRoutineLogs(weekLogsRaw);
 
-  const dailyTasks = buildDailyTasks(todayLogs, ROUTINE_TASKS);
+  const dailyTasks = buildDailyTasks(todayLogs);
   const completedCount = dailyTasks.filter((task) => task.completed).length;
   const percentage = Math.round((completedCount / ROUTINE_TASKS.length) * 100);
 
@@ -52,6 +52,7 @@ function serializeRoutineLogs(logs: Array<Record<string, unknown>>): RoutineLog[
     date: String(log.date),
     taskName: String(log.taskName),
     completed: Boolean(log.completed),
+    value: typeof log.value === "number" ? log.value : null,
     createdAt: new Date(String(log.createdAt)).toISOString()
   }));
 }

@@ -17,6 +17,10 @@ const RoutineLogSchema = new Schema(
       required: true,
       default: false
     },
+    value: {
+      type: Number,
+      default: null
+    },
     createdAt: {
       type: Date,
       required: true,
