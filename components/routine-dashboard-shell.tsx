@@ -41,10 +41,15 @@ export function RoutineDashboardShell({
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState(initialTasks);
   const [mobileView, setMobileView] = useState<"today" | "charts" | "stats">("today");
+  const [maxSelectableDate, setMaxSelectableDate] = useState(today);
 
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
+
+  useEffect(() => {
+    setMaxSelectableDate(getDateString(new Date()));
+  }, []);
 
   useEffect(() => {
     if (selectedDate !== getDateString()) {
@@ -101,6 +106,7 @@ export function RoutineDashboardShell({
                   <input
                     type="date"
                     value={selectedDate}
+                    max={maxSelectableDate}
                     onChange={(event) => updateSelectedDate(event.target.value)}
                     className="bg-transparent text-sm text-slate-100 outline-none [&::-webkit-calendar-picker-indicator]:opacity-70"
                     aria-label="Select routine date"
@@ -142,7 +148,6 @@ export function RoutineDashboardShell({
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:hidden">
-          <ProfileEntryButton settings={settings} />
           <DailyProgress
             completedCount={completedCount}
             percentage={percentage}

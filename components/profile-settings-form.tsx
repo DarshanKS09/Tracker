@@ -1,7 +1,7 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { ChangeEvent, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { ArrowLeft, Pencil, Plus, Trash2, Upload, UserRound } from "lucide-react";
 import type { RoutineSettings, RoutineTaskConfig, RoutineTaskType, WeeklySummary } from "@/utils/types";
@@ -23,10 +23,15 @@ function createEmptyRoutine(): RoutineTaskConfig {
 
 export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<RoutineSettings>(settings);
+  const backHref = useMemo(() => {
+    const date = searchParams.get("date");
+    return date ? `/?date=${encodeURIComponent(date)}` : "/";
+  }, [searchParams]);
 
   const updateRoutine = (index: number, nextPartial: Partial<RoutineTaskConfig>) => {
     setForm((current) => ({
@@ -97,7 +102,7 @@ export function ProfileSettingsForm({ settings, stats }: ProfileSettingsFormProp
           <div>
             <button
               type="button"
-              onClick={() => router.push("/")}
+              onClick={() => router.push(backHref)}
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.18em] text-slate-300 transition hover:bg-white/5"
             >
               <ArrowLeft className="h-4 w-4" />
