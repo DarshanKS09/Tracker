@@ -22,6 +22,10 @@ type DashboardChartsProps = {
   weeklyFeedback: WeeklyFeedbackPoint[];
 };
 
+function getDayOrder(dateString: string) {
+  return new Date(`${dateString}T00:00:00`).getDay();
+}
+
 function buildLiveWeeklyChart(
   weeklyChartData: WeeklyChartPoint[],
   tasks: DailyTaskItem[],
@@ -61,7 +65,9 @@ export function DashboardCharts({
   weeklyFeedback
 }: DashboardChartsProps) {
   const [chartView, setChartView] = useState<"daily" | "weekly">("daily");
-  const liveChartData = buildLiveWeeklyChart(weeklyChartData, tasks, today);
+  const liveChartData = buildLiveWeeklyChart(weeklyChartData, tasks, today).sort(
+    (left, right) => getDayOrder(left.date) - getDayOrder(right.date)
+  );
   const completedCount = tasks.filter((task) => task.completed).length;
   const completionPercentage = Math.round((completedCount / tasks.length) * 100);
   const dailyDonutData = [
@@ -89,7 +95,7 @@ export function DashboardCharts({
       percentage,
       feedback: getFeedbackLabel(percentage)
     };
-  });
+  }).sort((left, right) => getDayOrder(left.date) - getDayOrder(right.date));
   const weeklyAverage = Math.round(
     liveChartData.reduce((sum, point) => sum + point.completionPercentage, 0) / liveChartData.length
   );
@@ -170,8 +176,12 @@ export function DashboardCharts({
                       contentStyle={{
                         backgroundColor: "#08111f",
                         border: "1px solid rgba(255,255,255,0.12)",
-                        borderRadius: 16
+                        borderRadius: 16,
+                        color: "#e2e8f0"
                       }}
+                      labelStyle={{ color: "#f8fafc" }}
+                      itemStyle={{ color: "#cbd5e1" }}
+                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -223,8 +233,11 @@ export function DashboardCharts({
                     contentStyle={{
                       backgroundColor: "#08111f",
                       border: "1px solid rgba(255,255,255,0.12)",
-                      borderRadius: 16
+                      borderRadius: 16,
+                      color: "#e2e8f0"
                     }}
+                    labelStyle={{ color: "#f8fafc" }}
+                    itemStyle={{ color: "#cbd5e1" }}
                   />
                   <Area
                     type="monotone"

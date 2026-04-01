@@ -18,3 +18,15 @@ export function getLastNDates(days: number) {
 
   return result;
 }
+
+export function getCurrentWeekDatesStartingSunday(referenceDate = new Date()) {
+  const startOfWeek = new Date(referenceDate);
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + index);
+    return getDateString(date);
+  });
+}

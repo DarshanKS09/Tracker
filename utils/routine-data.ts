@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog as RoutineLogModel } from "@/models/routine-log";
 import { ROUTINE_TASKS } from "@/utils/constants";
-import { getDateString, getLastNDates } from "@/utils/date";
+import { getCurrentWeekDatesStartingSunday, getDateString } from "@/utils/date";
 import {
   buildDailyTasks,
   buildWeeklyChartData,
@@ -13,7 +13,7 @@ import type { RoutineLog } from "@/utils/types";
 
 export async function getRoutinePageData() {
   const today = getDateString();
-  const lastSevenDates = getLastNDates(7);
+  const lastSevenDates = getCurrentWeekDatesStartingSunday();
   await connectToDatabase();
 
   const [todayLogsRaw, weekLogsRaw] = await Promise.all([
