@@ -11,12 +11,16 @@ export type DailyTaskItem = {
   taskName: string;
   taskType: "boolean" | "duration" | "water";
   completed: boolean;
-  target: number;
   unit?: string;
   helperText: string;
   value: number;
-  options: number[];
   timestamp?: string | null;
+};
+
+export type DailyRoutineChartPoint = {
+  routine: string;
+  done: number;
+  undone: number;
 };
 
 export type WeeklyChartPoint = {

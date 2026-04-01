@@ -20,11 +20,9 @@ export function buildDailyTasks(logs: RoutineLog[]) {
       taskName: task.name,
       taskType: task.type,
       completed: log?.completed ?? false,
-      target: task.target,
       unit: task.unit,
       helperText: task.helperText,
       value: log?.value ?? 0,
-      options: task.options ?? [],
       timestamp: log?.createdAt ?? null
     };
   });

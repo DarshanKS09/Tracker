@@ -1,35 +1,31 @@
 "use client";
 
-import { startTransition, useOptimistic, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Check, ChevronDown, ChevronUp, Droplets, LoaderCircle } from "lucide-react";
+import { Check, Droplets } from "lucide-react";
 import { formatTaskValue } from "@/utils/constants";
 import type { DailyTaskItem } from "@/utils/types";
 
 type DailyChecklistProps = {
   tasks: DailyTaskItem[];
+  onTasksChange: (tasks: DailyTaskItem[]) => void;
 };
 
-export function DailyChecklist({ tasks }: DailyChecklistProps) {
+export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
   const router = useRouter();
-  const [pendingTask, setPendingTask] = useState<string | null>(null);
-  const [optimisticTasks, setOptimisticTasks] = useOptimistic(
-    tasks,
-    (currentState, update: { taskName: string; completed: boolean; value?: number }) =>
-      currentState.map((task) =>
-        task.taskName === update.taskName
-          ? {
-              ...task,
-              completed: update.completed,
-              value: typeof update.value === "number" ? update.value : task.value
-            }
-          : task
-      )
-  );
+  const [localTasks, setLocalTasks] = useState(tasks);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleUpdate = async ({
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  useEffect(() => {
+    onTasksChange(localTasks);
+  }, [localTasks, onTasksChange]);
+
+  const updateLocalTask = ({
     taskName,
     completed,
     value
@@ -38,11 +34,29 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
     completed: boolean;
     value?: number;
   }) => {
-    setPendingTask(taskName);
+    setLocalTasks((currentState) =>
+      currentState.map((task) =>
+        task.taskName === taskName
+          ? {
+              ...task,
+              completed,
+              value: typeof value === "number" ? value : task.value
+            }
+          : task
+      )
+    );
+  };
+
+  const persistTask = async ({
+    taskName,
+    completed,
+    value
+  }: {
+    taskName: string;
+    completed: boolean;
+    value?: number;
+  }) => {
     setErrorMessage(null);
-    startTransition(() => {
-      setOptimisticTasks({ taskName, completed, value });
-    });
 
     try {
       const response = await fetch("/api/routine", {
@@ -66,15 +80,27 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
       });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to update task.");
+      setLocalTasks(tasks);
       startTransition(() => {
         router.refresh();
       });
-    } finally {
-      setPendingTask(null);
     }
   };
 
-  const completedCount = optimisticTasks.filter((task) => task.completed).length;
+  const handleUpdate = async ({
+    taskName,
+    completed,
+    value
+  }: {
+    taskName: string;
+    completed: boolean;
+    value?: number;
+  }) => {
+    updateLocalTask({ taskName, completed, value });
+    await persistTask({ taskName, completed, value });
+  };
+
+  const completedCount = localTasks.filter((task) => task.completed).length;
 
   return (
     <section className="panel p-6">
@@ -82,7 +108,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
         <div>
           <h2 className="text-xl font-semibold text-white">Today&apos;s checklist</h2>
           <p className="mt-1 text-sm text-slate-400">
-            {completedCount} of {optimisticTasks.length} routines finished
+            {completedCount} of {localTasks.length} routines finished
           </p>
         </div>
       </div>
@@ -94,8 +120,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
       ) : null}
 
       <div className="grid gap-3">
-        {optimisticTasks.map((task) => {
-          const isPending = pendingTask === task.taskName;
+        {localTasks.map((task) => {
           const statusTone = task.completed
             ? "border-emerald-400/30 bg-emerald-400/10"
             : "border-red-400/20 bg-red-400/5";
@@ -104,11 +129,11 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
             <div
               key={task.taskName}
               className={clsx(
-                "rounded-2xl border px-4 py-4 transition-all duration-200",
+                "rounded-2xl border px-4 py-4 transition-all duration-200 sm:px-5",
                 statusTone
               )}
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-3">
                   {task.taskType === "boolean" ? (
                     <button
@@ -130,20 +155,29 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                       <Check className="h-4 w-4" />
                     </button>
                   ) : (
-                    <span
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdate({
+                          taskName: task.taskName,
+                          value: task.value,
+                          completed: !task.completed
+                        })
+                      }
                       className={clsx(
                         "mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border transition-colors duration-200",
                         task.completed
                           ? "border-emerald-300 bg-emerald-400 text-surface-950"
-                          : "border-white/20 bg-white/5 text-transparent"
+                          : "border-white/20 bg-white/5 text-transparent hover:text-slate-500"
                       )}
+                      aria-label={`${task.completed ? "Reset" : "Complete"} ${task.taskName}`}
                     >
                       {task.taskType === "water" && !task.completed ? (
                         <Droplets className="h-4 w-4 text-sky-300" />
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                    </span>
+                    </button>
                   )}
                   <div>
                     <p className="font-medium text-white">{task.taskName}</p>
@@ -158,110 +192,97 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                         ? task.completed
                           ? "Done today"
                           : "Open"
-                        : `${formatTaskValue(task.value, task.unit)} / ${formatTaskValue(task.target, task.unit)}`}
+                        : formatTaskValue(task.value, task.unit)}
                     </p>
                   </div>
                 </div>
 
-                {isPending ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin text-slate-300" />
-                ) : task.taskType === "boolean" ? (
-                  <div
-                    className={clsx(
-                      "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
-                      task.completed
-                        ? "bg-emerald-300/15 text-emerald-200"
-                        : "bg-red-300/10 text-red-200"
-                    )}
-                  >
-                    {task.completed ? "Done" : "Open"}
-                  </div>
-                ) : (
-                  <div
-                    className={clsx(
-                      "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
-                      task.completed
-                        ? "bg-emerald-300/15 text-emerald-200"
-                        : "bg-red-300/10 text-red-200"
-                    )}
-                  >
-                    {task.completed ? "Goal met" : "In progress"}
-                  </div>
-                )}
+                <div className="flex justify-start sm:justify-end">
+                  {task.taskType === "boolean" ? (
+                    <div
+                      className={clsx(
+                        "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
+                        task.completed
+                          ? "bg-emerald-300/15 text-emerald-200"
+                          : "bg-red-300/10 text-red-200"
+                      )}
+                    >
+                      {task.completed ? "Done" : "Open"}
+                    </div>
+                  ) : (
+                    <div
+                      className={clsx(
+                        "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
+                        task.completed
+                          ? "bg-emerald-300/15 text-emerald-200"
+                          : "bg-red-300/10 text-red-200"
+                      )}
+                    >
+                      {task.completed ? "Goal met" : "In progress"}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {task.taskType !== "boolean" ? (
-                <div className="mt-4 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const currentIndex = task.options.indexOf(task.value);
-                      const nextIndex = Math.max(currentIndex - 1, 0);
-                      const nextValue = task.options[nextIndex] ?? 0;
-
-                      handleUpdate({
-                        taskName: task.taskName,
-                        value: nextValue,
-                        completed: nextValue >= task.target
-                      });
-                    }}
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-                    aria-label={`Decrease ${task.taskName}`}
-                  >
-                    <ChevronDown className="h-5 w-5" />
-                  </button>
-
-                  <div className="min-w-[132px] rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-center">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                      {task.taskType === "water" ? "Consumed" : "Selected"}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      {formatTaskValue(task.value, task.unit)}
-                    </p>
+                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                        {task.taskType === "water" ? "Water consumed" : "Time tracked"}
+                      </p>
+                      <p className="mt-1 text-xl font-semibold text-white">
+                        {formatTaskValue(task.value, task.unit)}
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs uppercase tracking-[0.2em] text-slate-300">
+                      {task.completed ? "Checked done" : "Not checked"}
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const currentIndex = task.options.indexOf(task.value);
-                      const safeIndex = currentIndex === -1 ? 0 : currentIndex;
-                      const nextIndex = Math.min(safeIndex + 1, task.options.length - 1);
-                      const nextValue = task.options[nextIndex] ?? task.value;
-
-                      handleUpdate({
-                        taskName: task.taskName,
-                        value: nextValue,
-                        completed: nextValue >= task.target
-                      });
-                    }}
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-                    aria-label={`Increase ${task.taskName}`}
-                  >
-                    <ChevronUp className="h-5 w-5" />
-                  </button>
-
-                  <div className="ml-auto flex flex-wrap justify-end gap-2">
-                    {task.options.map((option) => (
-                      <button
-                        key={`${task.taskName}-${option}`}
-                        type="button"
-                        onClick={() =>
-                          handleUpdate({
-                            taskName: task.taskName,
-                            value: option,
-                            completed: option >= task.target
-                          })
-                        }
-                        className={clsx(
-                          "rounded-full border px-3 py-1.5 text-xs transition",
-                          task.value === option
-                            ? "border-emerald-300/50 bg-emerald-400/15 text-emerald-100"
-                            : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                        )}
-                      >
-                        {formatTaskValue(option, task.unit)}
-                      </button>
-                    ))}
+                  <div className="mt-5">
+                    <input
+                      type="range"
+                      min={0}
+                      max={task.taskType === "water" ? 5 : 5}
+                      step={0.1}
+                      value={task.value}
+                      onChange={(event) => {
+                        const nextValue = Number(event.target.value);
+                        updateLocalTask({
+                          taskName: task.taskName,
+                          value: nextValue,
+                          completed: task.completed
+                        });
+                      }}
+                      onMouseUp={(event) => {
+                        const nextValue = Number((event.target as HTMLInputElement).value);
+                        void persistTask({
+                          taskName: task.taskName,
+                          value: nextValue,
+                          completed: task.completed
+                        });
+                      }}
+                      onTouchEnd={(event) => {
+                        const target = event.target as HTMLInputElement;
+                        const nextValue = Number(target.value);
+                        void persistTask({
+                          taskName: task.taskName,
+                          value: nextValue,
+                          completed: task.completed
+                        });
+                      }}
+                      className="routine-slider h-3 w-full cursor-pointer appearance-none rounded-full bg-transparent"
+                      style={{
+                        background: `linear-gradient(90deg, #22c55e 0%, #38bdf8 ${(task.value / 5) * 100}%, rgba(255,255,255,0.08) ${(task.value / 5) * 100}%, rgba(255,255,255,0.08) 100%)`
+                      }}
+                      aria-label={task.taskName}
+                    />
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                      <span>0</span>
+                      <span>2.5 {task.unit}</span>
+                      <span>5 {task.unit}</span>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -269,6 +290,41 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
           );
         })}
       </div>
+
+      <style jsx>{`
+        .routine-slider::-webkit-slider-runnable-track {
+          height: 12px;
+          border-radius: 9999px;
+          background: transparent;
+        }
+
+        .routine-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          margin-top: -6px;
+          height: 24px;
+          width: 24px;
+          border-radius: 9999px;
+          border: 2px solid rgba(255, 255, 255, 0.9);
+          background: linear-gradient(135deg, #22c55e, #38bdf8);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .routine-slider::-moz-range-track {
+          height: 12px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .routine-slider::-moz-range-thumb {
+          height: 24px;
+          width: 24px;
+          border: 2px solid rgba(255, 255, 255, 0.9);
+          border-radius: 9999px;
+          background: linear-gradient(135deg, #22c55e, #38bdf8);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+      `}</style>
     </section>
   );
 }
