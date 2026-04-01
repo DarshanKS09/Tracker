@@ -102,11 +102,11 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
   const completedCount = localTasks.filter((task) => task.completed).length;
 
   return (
-    <section className="panel p-6">
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <section className="panel p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Today&apos;s checklist</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="text-lg font-semibold text-white">Today&apos;s checklist</h2>
+          <p className="mt-1 text-xs text-slate-400 sm:text-sm">
             {completedCount} of {localTasks.length} routines finished
           </p>
         </div>
@@ -128,11 +128,11 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
             <div
               key={task.taskName}
               className={clsx(
-                "rounded-2xl border px-4 py-4 transition-all duration-200 sm:px-5",
+                "rounded-2xl border px-3 py-3 transition-all duration-200 sm:px-4",
                 statusTone
               )}
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-3">
                   {task.taskType === "boolean" ? (
                     <button
@@ -151,7 +151,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
                       )}
                       aria-label={`${task.completed ? "Unmark" : "Mark"} ${task.taskName}`}
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3.5 w-3.5" />
                     </button>
                   ) : (
                     <button
@@ -172,18 +172,18 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
                       aria-label={`${task.completed ? "Reset" : "Complete"} ${task.taskName}`}
                     >
                       {task.taskType === "water" && !task.completed ? (
-                        <Droplets className="h-4 w-4 text-sky-300" />
+                        <Droplets className="h-3.5 w-3.5 text-sky-300" />
                       ) : (
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3.5 w-3.5" />
                       )}
                     </button>
                   )}
                   <div>
-                    <p className="font-medium text-white">{task.taskName}</p>
-                    <p className="mt-1 text-sm text-slate-300">{task.helperText}</p>
+                    <p className="text-sm font-medium text-white sm:text-[15px]">{task.taskName}</p>
+                    <p className="mt-1 text-xs text-slate-300 sm:text-sm">{task.helperText}</p>
                     <p
                       className={clsx(
-                        "mt-2 text-xs uppercase tracking-[0.2em]",
+                        "mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px]",
                         task.completed ? "text-emerald-200/80" : "text-red-200/70"
                       )}
                     >
@@ -200,7 +200,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
                   {task.taskType === "boolean" ? (
                     <div
                       className={clsx(
-                        "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
+                        "rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.2em]",
                         task.completed
                           ? "bg-emerald-300/15 text-emerald-200"
                           : "bg-red-300/10 text-red-200"
@@ -211,7 +211,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
                   ) : (
                     <div
                       className={clsx(
-                        "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]",
+                        "rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.2em]",
                         task.completed
                           ? "bg-emerald-300/15 text-emerald-200"
                           : "bg-red-300/10 text-red-200"
@@ -224,22 +224,22 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
               </div>
 
               {task.taskType !== "boolean" ? (
-                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
                         {task.taskType === "water" ? "Water consumed" : "Time tracked"}
                       </p>
-                      <p className="mt-1 text-xl font-semibold text-white">
+                      <p className="mt-1 text-lg font-semibold text-white">
                         {formatTaskValue(task.value, task.unit)}
                       </p>
                     </div>
-                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs uppercase tracking-[0.2em] text-slate-300">
+                    <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
                       {task.completed ? "Checked done" : "Not checked"}
                     </div>
                   </div>
 
-                  <div className="mt-5">
+                  <div className="mt-4">
                     <input
                       type="range"
                       min={0}
@@ -277,7 +277,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
                       }}
                       aria-label={task.taskName}
                     />
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400 sm:text-xs">
                       <span>0</span>
                       <span>2.5 {task.unit}</span>
                       <span>5 {task.unit}</span>
