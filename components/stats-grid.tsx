@@ -3,6 +3,7 @@ import type { WeeklySummary } from "@/utils/types";
 
 type StatsGridProps = {
   stats: WeeklySummary;
+  compact?: boolean;
 };
 
 const statItems = [
@@ -33,7 +34,7 @@ const statItems = [
   }
 ] as const;
 
-export function StatsGrid({ stats }: StatsGridProps) {
+export function StatsGrid({ stats, compact = false }: StatsGridProps) {
   const values: Record<(typeof statItems)[number]["key"], string> = {
     totalTasks: stats.totalTasks.toString(),
     averageCompletion: `${stats.averageCompletion}%`,
@@ -43,11 +44,13 @@ export function StatsGrid({ stats }: StatsGridProps) {
   };
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <section className={compact ? "grid gap-3" : "grid gap-4 md:grid-cols-2 xl:grid-cols-5"}>
       {statItems.map((item) => (
-        <div key={item.key} className="panel p-5">
-          <p className="text-sm text-slate-400">{item.label}</p>
-          <p className={clsx("mt-3 text-2xl font-semibold", item.accent)}>{values[item.key]}</p>
+        <div key={item.key} className={clsx("panel", compact ? "p-4" : "p-5")}>
+          <p className={clsx("text-slate-400", compact ? "text-xs" : "text-sm")}>{item.label}</p>
+          <p className={clsx("mt-3 font-semibold", item.accent, compact ? "text-xl" : "text-2xl")}>
+            {values[item.key]}
+          </p>
         </div>
       ))}
     </section>
