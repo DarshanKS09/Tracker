@@ -6,9 +6,16 @@ import { CalendarDays } from "lucide-react";
 import { DailyChecklist } from "@/components/daily-checklist";
 import { DailyProgress } from "@/components/daily-progress";
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { ProfileSettings } from "@/components/profile-settings";
 import { StatsGrid } from "@/components/stats-grid";
 import { formatFullDate, getDateString } from "@/utils/date";
-import type { DailyTaskItem, WeeklyChartPoint, WeeklyFeedbackPoint, WeeklySummary } from "@/utils/types";
+import type {
+  DailyTaskItem,
+  RoutineSettings,
+  WeeklyChartPoint,
+  WeeklyFeedbackPoint,
+  WeeklySummary
+} from "@/utils/types";
 
 type RoutineDashboardShellProps = {
   today: string;
@@ -17,6 +24,7 @@ type RoutineDashboardShellProps = {
   weeklyChartData: WeeklyChartPoint[];
   weeklyFeedback: WeeklyFeedbackPoint[];
   stats: WeeklySummary;
+  settings: RoutineSettings;
 };
 
 export function RoutineDashboardShell({
@@ -25,7 +33,8 @@ export function RoutineDashboardShell({
   initialTasks,
   weeklyChartData,
   weeklyFeedback,
-  stats
+  stats,
+  settings
 }: RoutineDashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -67,7 +76,7 @@ export function RoutineDashboardShell({
   return (
     <>
       <section className="panel mobile-shell overflow-hidden p-4 sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 flex items-center justify-between lg:hidden">
               <div>
@@ -118,16 +127,22 @@ export function RoutineDashboardShell({
               wading through clutter.
             </p>
           </div>
-          <div className="hidden lg:block">
-            <DailyProgress
-              completedCount={completedCount}
-              percentage={percentage}
-              totalTasks={tasks.length}
-            />
+          <div className="flex flex-col items-stretch gap-3 lg:items-end">
+            <div className="self-end">
+              <ProfileSettings settings={settings} />
+            </div>
+            <div className="hidden lg:block">
+              <DailyProgress
+                completedCount={completedCount}
+                percentage={percentage}
+                totalTasks={tasks.length}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mt-4 lg:hidden">
+        <div className="mt-4 flex flex-col gap-3 lg:hidden">
+          <ProfileSettings settings={settings} />
           <DailyProgress
             completedCount={completedCount}
             percentage={percentage}

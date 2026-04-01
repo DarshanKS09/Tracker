@@ -1,3 +1,17 @@
+export type RoutineTaskType = "boolean" | "duration" | "water";
+
+export type RoutineTaskConfig = {
+  name: string;
+  type: RoutineTaskType;
+  unit?: string;
+  helperText: string;
+};
+
+export type UserProfile = {
+  displayName: string;
+  avatarUrl: string;
+};
+
 export type RoutineLog = {
   id: string;
   date: string;
@@ -9,7 +23,7 @@ export type RoutineLog = {
 
 export type DailyTaskItem = {
   taskName: string;
-  taskType: "boolean" | "duration" | "water";
+  taskType: RoutineTaskType;
   completed: boolean;
   unit?: string;
   helperText: string;
@@ -50,4 +64,9 @@ export type WeeklySummary = {
   bestDay: string;
   currentStreak: number;
   longestStreak: number;
+};
+
+export type RoutineSettings = {
+  profile: UserProfile;
+  routines: RoutineTaskConfig[];
 };

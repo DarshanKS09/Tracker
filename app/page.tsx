@@ -20,6 +20,7 @@ export default async function HomePage({
         weeklyChartData={data.weekly.chartData}
         weeklyFeedback={data.weekly.feedback}
         stats={data.weekly.summary}
+        settings={data.settings}
       />
     </main>
   );

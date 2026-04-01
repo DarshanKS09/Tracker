@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog as RoutineLogModel } from "@/models/routine-log";
-import { ROUTINE_TASKS } from "@/utils/constants";
+import { DEFAULT_ROUTINE_SETTINGS } from "@/utils/constants";
+import { RoutineSettingsModel } from "@/models/routine-settings";
 import { getCurrentWeekDatesStartingSunday, getDateString, isValidDateString } from "@/utils/date";
 import {
   buildDailyTasks,
@@ -9,13 +10,14 @@ import {
   buildWeeklySummary,
   buildWeeklyTaskTable
 } from "@/utils/routine-analytics";
-import type { RoutineLog } from "@/utils/types";
+import type { RoutineLog, RoutineSettings } from "@/utils/types";
 
 export async function getRoutinePageData(selectedDateParam?: string) {
   const today = getDateString();
   const selectedDate: string = isValidDateString(selectedDateParam) ? selectedDateParam! : today;
   const lastSevenDates = getCurrentWeekDatesStartingSunday(new Date(`${selectedDate}T00:00:00`));
   await connectToDatabase();
+  const settings = await getRoutineSettings();
 
   const [selectedLogsRaw, weekLogsRaw] = await Promise.all([
     RoutineLogModel.find({ date: selectedDate }).sort({ createdAt: -1 }).lean(),
@@ -32,22 +34,23 @@ export async function getRoutinePageData(selectedDateParam?: string) {
   const selectedLogs = serializeRoutineLogs(selectedLogsRaw);
   const weekLogs = serializeRoutineLogs(weekLogsRaw);
 
-  const dailyTasks = buildDailyTasks(selectedLogs);
+  const dailyTasks = buildDailyTasks(selectedLogs, settings.routines);
   const completedCount = dailyTasks.filter((task) => task.completed).length;
-  const percentage = Math.round((completedCount / ROUTINE_TASKS.length) * 100);
+  const percentage = Math.round((completedCount / settings.routines.length) * 100);
 
-  const chartData = buildWeeklyChartData(weekLogs, lastSevenDates, ROUTINE_TASKS.length);
+  const chartData = buildWeeklyChartData(weekLogs, lastSevenDates, settings.routines.length);
   const summary = buildWeeklySummary(chartData);
-  const taskTable = buildWeeklyTaskTable(weekLogs, lastSevenDates);
+  const taskTable = buildWeeklyTaskTable(weekLogs, lastSevenDates, settings.routines);
   const feedback = buildWeeklyFeedback(chartData);
 
   return {
     today,
     selectedDate,
+    settings,
     daily: {
       tasks: dailyTasks,
       completedCount,
-      totalTasks: ROUTINE_TASKS.length,
+      totalTasks: settings.routines.length,
       percentage
     },
     weekly: {
@@ -57,6 +60,28 @@ export async function getRoutinePageData(selectedDateParam?: string) {
       feedback,
       summary
     }
+  };
+}
+
+async function getRoutineSettings(): Promise<RoutineSettings> {
+  const existing = await RoutineSettingsModel.findOne({ key: "default" }).lean();
+
+  if (!existing) {
+    return DEFAULT_ROUTINE_SETTINGS;
+  }
+
+  return {
+    profile: {
+      displayName: existing.profile?.displayName || DEFAULT_ROUTINE_SETTINGS.profile.displayName,
+      avatarUrl: existing.profile?.avatarUrl || ""
+    },
+    routines:
+      existing.routines?.map((task) => ({
+        name: String(task.name),
+        type: task.type,
+        unit: task.unit || undefined,
+        helperText: task.helperText || ""
+      })) ?? DEFAULT_ROUTINE_SETTINGS.routines
   };
 }
 

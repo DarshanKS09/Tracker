@@ -1,7 +1,8 @@
-import { ROUTINE_TASK_CONFIGS, SUCCESS_THRESHOLD } from "@/utils/constants";
+import { SUCCESS_THRESHOLD } from "@/utils/constants";
 import { formatDayLabel } from "@/utils/date";
 import type {
   RoutineLog,
+  RoutineTaskConfig,
   WeeklyChartPoint,
   WeeklyFeedbackPoint,
   WeeklySummary,
@@ -16,10 +17,10 @@ type DaySnapshot = {
   successfulDay: boolean;
 };
 
-export function buildDailyTasks(logs: RoutineLog[]) {
+export function buildDailyTasks(logs: RoutineLog[], taskConfigs: RoutineTaskConfig[]) {
   const taskMap = new Map(logs.map((log) => [log.taskName, log]));
 
-  return ROUTINE_TASK_CONFIGS.map((task) => {
+  return taskConfigs.map((task) => {
     const log = taskMap.get(task.name);
 
     return {
@@ -71,10 +72,14 @@ export function buildWeeklySummary(chartData: WeeklyChartPoint[]): WeeklySummary
   };
 }
 
-export function buildWeeklyTaskTable(logs: RoutineLog[], dates: string[]): WeeklyTaskRow[] {
+export function buildWeeklyTaskTable(
+  logs: RoutineLog[],
+  dates: string[],
+  taskConfigs: RoutineTaskConfig[]
+): WeeklyTaskRow[] {
   const grouped = groupLogsByDate(logs);
 
-  return ROUTINE_TASK_CONFIGS.map((task) => {
+  return taskConfigs.map((task) => {
     const completionByDate = dates.reduce<Record<string, boolean>>((accumulator, date) => {
       const dayLogs = grouped.get(date) ?? [];
       const log = dayLogs.find((item) => item.taskName === task.name);

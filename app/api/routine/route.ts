@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog } from "@/models/routine-log";
-import { getTaskCompletion, ROUTINE_TASKS } from "@/utils/constants";
+import { getTaskCompletion } from "@/utils/constants";
 import { getDateString } from "@/utils/date";
+import { RoutineSettingsModel } from "@/models/routine-settings";
 
 type TogglePayload = {
   taskName?: string;
@@ -15,15 +16,24 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as TogglePayload;
   const date = body.date ?? getDateString();
 
-  if (!body.taskName || !ROUTINE_TASKS.includes(body.taskName)) {
-    return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
-  }
-
   const nextValue = typeof body.value === "number" ? body.value : null;
-  const nextCompleted = getTaskCompletion(body.taskName, nextValue, body.completed);
 
   try {
     await connectToDatabase();
+    const settings = await RoutineSettingsModel.findOne({ key: "default" }).lean();
+    const routines =
+      settings?.routines?.map((task) => ({
+        name: String(task.name),
+        type: task.type,
+        unit: task.unit || undefined,
+        helperText: task.helperText || ""
+      })) ?? [];
+
+    if (!body.taskName || !routines.some((task) => task.name === body.taskName)) {
+      return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });
+    }
+
+    const nextCompleted = getTaskCompletion(body.taskName, routines, nextValue, body.completed);
     await RoutineLog.findOneAndUpdate(
       { date, taskName: body.taskName },
       {

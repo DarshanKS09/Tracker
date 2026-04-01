@@ -1,13 +1,6 @@
-export type RoutineTaskType = "boolean" | "duration" | "water";
+import type { RoutineSettings, RoutineTaskConfig } from "@/utils/types";
 
-export type RoutineTaskConfig = {
-  name: string;
-  type: RoutineTaskType;
-  unit?: string;
-  helperText: string;
-};
-
-export const ROUTINE_TASK_CONFIGS: RoutineTaskConfig[] = [
+export const DEFAULT_ROUTINE_TASK_CONFIGS: RoutineTaskConfig[] = [
   {
     name: "Wake up at 5",
     type: "boolean",
@@ -66,16 +59,27 @@ export const ROUTINE_TASK_CONFIGS: RoutineTaskConfig[] = [
   }
 ];
 
-export const ROUTINE_TASKS = ROUTINE_TASK_CONFIGS.map((task) => task.name);
+export const DEFAULT_ROUTINE_SETTINGS: RoutineSettings = {
+  profile: {
+    displayName: "Routine owner",
+    avatarUrl: ""
+  },
+  routines: DEFAULT_ROUTINE_TASK_CONFIGS
+};
 
 export const SUCCESS_THRESHOLD = 80;
 
-export function getTaskConfig(taskName: string) {
-  return ROUTINE_TASK_CONFIGS.find((task) => task.name === taskName);
+export function getTaskConfig(taskName: string, tasks: RoutineTaskConfig[]) {
+  return tasks.find((task) => task.name === taskName);
 }
 
-export function getTaskCompletion(taskName: string, value?: number | null, completed?: boolean) {
-  const config = getTaskConfig(taskName);
+export function getTaskCompletion(
+  taskName: string,
+  tasks: RoutineTaskConfig[],
+  value?: number | null,
+  completed?: boolean
+) {
+  const config = getTaskConfig(taskName, tasks);
 
   if (!config) {
     return false;
