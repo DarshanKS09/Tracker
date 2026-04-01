@@ -25,7 +25,9 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
   const handleToggle = async (taskName: string, nextValue: boolean) => {
     setPendingTask(taskName);
     setErrorMessage(null);
-    setOptimisticTasks({ taskName, completed: nextValue });
+    startTransition(() => {
+      setOptimisticTasks({ taskName, completed: nextValue });
+    });
 
     try {
       const response = await fetch("/api/routine", {
