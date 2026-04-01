@@ -6,7 +6,7 @@ import { CalendarDays } from "lucide-react";
 import { DailyChecklist } from "@/components/daily-checklist";
 import { DailyProgress } from "@/components/daily-progress";
 import { DashboardCharts } from "@/components/dashboard-charts";
-import { ProfileSettings } from "@/components/profile-settings";
+import { ProfileEntryButton } from "@/components/profile-entry-button";
 import { StatsGrid } from "@/components/stats-grid";
 import { formatFullDate, getDateString } from "@/utils/date";
 import type {
@@ -129,7 +129,7 @@ export function RoutineDashboardShell({
           </div>
           <div className="flex flex-col items-stretch gap-3 lg:items-end">
             <div className="self-end">
-              <ProfileSettings settings={settings} stats={stats} />
+              <ProfileEntryButton settings={settings} />
             </div>
             <div className="hidden lg:block">
               <DailyProgress
@@ -142,7 +142,7 @@ export function RoutineDashboardShell({
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:hidden">
-          <ProfileSettings settings={settings} stats={stats} />
+          <ProfileEntryButton settings={settings} />
           <DailyProgress
             completedCount={completedCount}
             percentage={percentage}
