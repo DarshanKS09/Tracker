@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { DEFAULT_ROUTINE_SETTINGS } from "@/utils/constants";
 import { RoutineSettingsModel } from "@/models/routine-settings";
+import { normalizeRoutineSettingsDocument } from "@/utils/routine-settings";
 import type { RoutineSettings, RoutineTaskConfig } from "@/utils/types";
 
 function normalizeRoutine(task: Partial<RoutineTaskConfig>): RoutineTaskConfig | null {
@@ -33,18 +34,7 @@ export async function GET() {
       return NextResponse.json(DEFAULT_ROUTINE_SETTINGS);
     }
 
-    return NextResponse.json({
-      profile: {
-        displayName: existing.profile?.displayName || DEFAULT_ROUTINE_SETTINGS.profile.displayName,
-        avatarUrl: existing.profile?.avatarUrl || ""
-      },
-      routines: (existing.routines ?? []).map((task) => ({
-        name: String(task.name),
-        type: task.type,
-        unit: task.unit || undefined,
-        helperText: task.helperText || ""
-      }))
-    } satisfies RoutineSettings);
+    return NextResponse.json(normalizeRoutineSettingsDocument(existing) satisfies RoutineSettings);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to load settings.";
     return NextResponse.json({ error: message }, { status: 500 });

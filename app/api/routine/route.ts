@@ -4,6 +4,7 @@ import { RoutineLog } from "@/models/routine-log";
 import { getTaskCompletion } from "@/utils/constants";
 import { getDateString } from "@/utils/date";
 import { RoutineSettingsModel } from "@/models/routine-settings";
+import { normalizeRoutineSettingsDocument } from "@/utils/routine-settings";
 
 type TogglePayload = {
   taskName?: string;
@@ -21,13 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
     const settings = await RoutineSettingsModel.findOne({ key: "default" }).lean();
-    const routines =
-      settings?.routines?.map((task) => ({
-        name: String(task.name),
-        type: task.type,
-        unit: task.unit || undefined,
-        helperText: task.helperText || ""
-      })) ?? [];
+    const routines = normalizeRoutineSettingsDocument(settings).routines;
 
     if (!body.taskName || !routines.some((task) => task.name === body.taskName)) {
       return NextResponse.json({ error: "Invalid request payload." }, { status: 400 });

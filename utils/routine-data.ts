@@ -10,6 +10,7 @@ import {
   buildWeeklySummary,
   buildWeeklyTaskTable
 } from "@/utils/routine-analytics";
+import { normalizeRoutineSettingsDocument } from "@/utils/routine-settings";
 import type { RoutineLog, RoutineSettings } from "@/utils/types";
 
 export async function getRoutinePageData(selectedDateParam?: string) {
@@ -70,19 +71,7 @@ async function getRoutineSettings(): Promise<RoutineSettings> {
     return DEFAULT_ROUTINE_SETTINGS;
   }
 
-  return {
-    profile: {
-      displayName: existing.profile?.displayName || DEFAULT_ROUTINE_SETTINGS.profile.displayName,
-      avatarUrl: existing.profile?.avatarUrl || ""
-    },
-    routines:
-      existing.routines?.map((task) => ({
-        name: String(task.name),
-        type: task.type,
-        unit: task.unit || undefined,
-        helperText: task.helperText || ""
-      })) ?? DEFAULT_ROUTINE_SETTINGS.routines
-  };
+  return normalizeRoutineSettingsDocument(existing);
 }
 
 function serializeRoutineLogs(logs: Array<Record<string, unknown>>): RoutineLog[] {
