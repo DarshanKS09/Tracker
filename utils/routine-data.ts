@@ -13,7 +13,7 @@ import type { RoutineLog } from "@/utils/types";
 
 export async function getRoutinePageData(selectedDateParam?: string) {
   const today = getDateString();
-  const selectedDate = isValidDateString(selectedDateParam) ? selectedDateParam : today;
+  const selectedDate: string = isValidDateString(selectedDateParam) ? selectedDateParam! : today;
   const lastSevenDates = getCurrentWeekDatesStartingSunday(new Date(`${selectedDate}T00:00:00`));
   await connectToDatabase();
 
