@@ -1,9 +1,22 @@
 export function getDateString(date = new Date()) {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDayLabel(dateString: string) {
   return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(new Date(`${dateString}T00:00:00`));
+}
+
+export function formatFullDate(dateString: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(new Date(`${dateString}T00:00:00`));
 }
 
 export function getLastNDates(days: number) {
@@ -29,4 +42,12 @@ export function getCurrentWeekDatesStartingSunday(referenceDate = new Date()) {
     date.setDate(startOfWeek.getDate() + index);
     return getDateString(date);
   });
+}
+
+export function isValidDateString(value?: string) {
+  if (!value) {
+    return false;
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }

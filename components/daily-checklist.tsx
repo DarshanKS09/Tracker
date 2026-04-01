@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { Check, Droplets } from "lucide-react";
@@ -8,17 +8,20 @@ import { formatTaskValue } from "@/utils/constants";
 import type { DailyTaskItem } from "@/utils/types";
 
 type DailyChecklistProps = {
+  activeDate: string;
   tasks: DailyTaskItem[];
   onTasksChange: (tasks: DailyTaskItem[]) => void;
 };
 
-export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
+export function DailyChecklist({ activeDate, tasks, onTasksChange }: DailyChecklistProps) {
   const router = useRouter();
   const [localTasks, setLocalTasks] = useState(tasks);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const localTasksRef = useRef(tasks);
 
   useEffect(() => {
     setLocalTasks(tasks);
+    localTasksRef.current = tasks;
   }, [tasks]);
 
   const updateLocalTask = ({
@@ -30,20 +33,19 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
     completed: boolean;
     value?: number;
   }) => {
-    setLocalTasks((currentState) => {
-      const nextTasks = currentState.map((task) =>
-        task.taskName === taskName
-          ? {
-              ...task,
-              completed,
-              value: typeof value === "number" ? value : task.value
-            }
-          : task
-      );
+    const nextTasks = localTasksRef.current.map((task) =>
+      task.taskName === taskName
+        ? {
+            ...task,
+            completed,
+            value: typeof value === "number" ? value : task.value
+          }
+        : task
+    );
 
-      onTasksChange(nextTasks);
-      return nextTasks;
-    });
+    localTasksRef.current = nextTasks;
+    setLocalTasks(nextTasks);
+    onTasksChange(nextTasks);
   };
 
   const persistTask = async ({
@@ -64,6 +66,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          date: activeDate,
           taskName,
           completed,
           value
@@ -79,6 +82,7 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
       });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to update task.");
+      localTasksRef.current = tasks;
       setLocalTasks(tasks);
       startTransition(() => {
         router.refresh();

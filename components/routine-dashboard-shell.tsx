@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CalendarDays } from "lucide-react";
 import { DailyChecklist } from "@/components/daily-checklist";
 import { DailyProgress } from "@/components/daily-progress";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { StatsGrid } from "@/components/stats-grid";
+import { formatFullDate, getDateString } from "@/utils/date";
 import type { DailyTaskItem, WeeklyChartPoint, WeeklyFeedbackPoint, WeeklySummary } from "@/utils/types";
 
 type RoutineDashboardShellProps = {
   today: string;
+  selectedDate: string;
   initialTasks: DailyTaskItem[];
   weeklyChartData: WeeklyChartPoint[];
   weeklyFeedback: WeeklyFeedbackPoint[];
@@ -17,17 +21,45 @@ type RoutineDashboardShellProps = {
 
 export function RoutineDashboardShell({
   today,
+  selectedDate,
   initialTasks,
   weeklyChartData,
   weeklyFeedback,
   stats
 }: RoutineDashboardShellProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [tasks, setTasks] = useState(initialTasks);
   const [mobileView, setMobileView] = useState<"today" | "charts" | "stats">("today");
 
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
+
+  useEffect(() => {
+    if (selectedDate !== getDateString()) {
+      return;
+    }
+
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const timeout = window.setTimeout(() => {
+      const nextDate = getDateString(new Date());
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("date", nextDate);
+      router.replace(`${pathname}?${params.toString()}`);
+    }, nextMidnight.getTime() - now.getTime() + 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [pathname, router, searchParams, selectedDate]);
+
+  const updateSelectedDate = (nextDate: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("date", nextDate);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const completedCount = tasks.filter((task) => task.completed).length;
   const percentage = Math.round((completedCount / tasks.length) * 100);
@@ -46,6 +78,32 @@ export function RoutineDashboardShell({
               </div>
               <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-200">
                 {percentage}% done
+              </div>
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Active day</p>
+                <p className="mt-1 text-sm font-medium text-white">{formatFullDate(selectedDate)}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-slate-200">
+                  <CalendarDays className="h-4 w-4 text-cyan-300" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(event) => updateSelectedDate(event.target.value)}
+                    className="bg-transparent text-sm text-slate-100 outline-none [&::-webkit-calendar-picker-indicator]:opacity-70"
+                    aria-label="Select routine date"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => updateSelectedDate(today)}
+                  className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-emerald-200 transition hover:bg-emerald-400/15"
+                >
+                  Today
+                </button>
               </div>
             </div>
 
@@ -103,10 +161,10 @@ export function RoutineDashboardShell({
       </div>
 
       <section className="hidden gap-6 lg:grid lg:grid-cols-[1.05fr_0.95fr]">
-        <DailyChecklist tasks={tasks} onTasksChange={setTasks} />
+        <DailyChecklist activeDate={selectedDate} tasks={tasks} onTasksChange={setTasks} />
         <DashboardCharts
           tasks={tasks}
-          today={today}
+          today={selectedDate}
           weeklyChartData={weeklyChartData}
           weeklyFeedback={weeklyFeedback}
         />
@@ -114,12 +172,12 @@ export function RoutineDashboardShell({
 
       <section className="lg:hidden">
         {mobileView === "today" ? (
-          <DailyChecklist tasks={tasks} onTasksChange={setTasks} />
+          <DailyChecklist activeDate={selectedDate} tasks={tasks} onTasksChange={setTasks} />
         ) : null}
         {mobileView === "charts" ? (
           <DashboardCharts
             tasks={tasks}
-            today={today}
+            today={selectedDate}
             weeklyChartData={weeklyChartData}
             weeklyFeedback={weeklyFeedback}
           />

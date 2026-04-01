@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog as RoutineLogModel } from "@/models/routine-log";
 import { ROUTINE_TASKS } from "@/utils/constants";
-import { getCurrentWeekDatesStartingSunday, getDateString } from "@/utils/date";
+import { getCurrentWeekDatesStartingSunday, getDateString, isValidDateString } from "@/utils/date";
 import {
   buildDailyTasks,
   buildWeeklyChartData,
@@ -11,13 +11,14 @@ import {
 } from "@/utils/routine-analytics";
 import type { RoutineLog } from "@/utils/types";
 
-export async function getRoutinePageData() {
+export async function getRoutinePageData(selectedDateParam?: string) {
   const today = getDateString();
-  const lastSevenDates = getCurrentWeekDatesStartingSunday();
+  const selectedDate = isValidDateString(selectedDateParam) ? selectedDateParam : today;
+  const lastSevenDates = getCurrentWeekDatesStartingSunday(new Date(`${selectedDate}T00:00:00`));
   await connectToDatabase();
 
-  const [todayLogsRaw, weekLogsRaw] = await Promise.all([
-    RoutineLogModel.find({ date: today }).sort({ createdAt: -1 }).lean(),
+  const [selectedLogsRaw, weekLogsRaw] = await Promise.all([
+    RoutineLogModel.find({ date: selectedDate }).sort({ createdAt: -1 }).lean(),
     RoutineLogModel.find({
       date: {
         $gte: lastSevenDates[0],
@@ -28,10 +29,10 @@ export async function getRoutinePageData() {
       .lean()
   ]);
 
-  const todayLogs = serializeRoutineLogs(todayLogsRaw);
+  const selectedLogs = serializeRoutineLogs(selectedLogsRaw);
   const weekLogs = serializeRoutineLogs(weekLogsRaw);
 
-  const dailyTasks = buildDailyTasks(todayLogs);
+  const dailyTasks = buildDailyTasks(selectedLogs);
   const completedCount = dailyTasks.filter((task) => task.completed).length;
   const percentage = Math.round((completedCount / ROUTINE_TASKS.length) * 100);
 
@@ -42,6 +43,7 @@ export async function getRoutinePageData() {
 
   return {
     today,
+    selectedDate,
     daily: {
       tasks: dailyTasks,
       completedCount,
