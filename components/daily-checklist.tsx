@@ -21,10 +21,6 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
     setLocalTasks(tasks);
   }, [tasks]);
 
-  useEffect(() => {
-    onTasksChange(localTasks);
-  }, [localTasks, onTasksChange]);
-
   const updateLocalTask = ({
     taskName,
     completed,
@@ -34,8 +30,8 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
     completed: boolean;
     value?: number;
   }) => {
-    setLocalTasks((currentState) =>
-      currentState.map((task) =>
+    setLocalTasks((currentState) => {
+      const nextTasks = currentState.map((task) =>
         task.taskName === taskName
           ? {
               ...task,
@@ -43,8 +39,11 @@ export function DailyChecklist({ tasks, onTasksChange }: DailyChecklistProps) {
               value: typeof value === "number" ? value : task.value
             }
           : task
-      )
-    );
+      );
+
+      onTasksChange(nextTasks);
+      return nextTasks;
+    });
   };
 
   const persistTask = async ({

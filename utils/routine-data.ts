@@ -2,7 +2,13 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { RoutineLog as RoutineLogModel } from "@/models/routine-log";
 import { ROUTINE_TASKS } from "@/utils/constants";
 import { getDateString, getLastNDates } from "@/utils/date";
-import { buildDailyTasks, buildWeeklyChartData, buildWeeklySummary } from "@/utils/routine-analytics";
+import {
+  buildDailyTasks,
+  buildWeeklyChartData,
+  buildWeeklyFeedback,
+  buildWeeklySummary,
+  buildWeeklyTaskTable
+} from "@/utils/routine-analytics";
 import type { RoutineLog } from "@/utils/types";
 
 export async function getRoutinePageData() {
@@ -31,8 +37,11 @@ export async function getRoutinePageData() {
 
   const chartData = buildWeeklyChartData(weekLogs, lastSevenDates, ROUTINE_TASKS.length);
   const summary = buildWeeklySummary(chartData);
+  const taskTable = buildWeeklyTaskTable(weekLogs, lastSevenDates);
+  const feedback = buildWeeklyFeedback(chartData);
 
   return {
+    today,
     daily: {
       tasks: dailyTasks,
       completedCount,
@@ -41,6 +50,9 @@ export async function getRoutinePageData() {
     },
     weekly: {
       chartData,
+      dates: lastSevenDates,
+      taskTable,
+      feedback,
       summary
     }
   };

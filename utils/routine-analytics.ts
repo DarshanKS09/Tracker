@@ -1,6 +1,12 @@
 import { ROUTINE_TASK_CONFIGS, SUCCESS_THRESHOLD } from "@/utils/constants";
 import { formatDayLabel } from "@/utils/date";
-import type { RoutineLog, WeeklyChartPoint, WeeklySummary } from "@/utils/types";
+import type {
+  RoutineLog,
+  WeeklyChartPoint,
+  WeeklyFeedbackPoint,
+  WeeklySummary,
+  WeeklyTaskRow
+} from "@/utils/types";
 
 type DaySnapshot = {
   date: string;
@@ -63,6 +69,43 @@ export function buildWeeklySummary(chartData: WeeklyChartPoint[]): WeeklySummary
     currentStreak,
     longestStreak
   };
+}
+
+export function buildWeeklyTaskTable(logs: RoutineLog[], dates: string[]): WeeklyTaskRow[] {
+  const grouped = groupLogsByDate(logs);
+
+  return ROUTINE_TASK_CONFIGS.map((task) => {
+    const completionByDate = dates.reduce<Record<string, boolean>>((accumulator, date) => {
+      const dayLogs = grouped.get(date) ?? [];
+      const log = dayLogs.find((item) => item.taskName === task.name);
+      accumulator[date] = log?.completed ?? false;
+      return accumulator;
+    }, {});
+
+    const completedDays = dates.filter((date) => completionByDate[date]).length;
+
+    return {
+      taskName: task.name,
+      completionByDate,
+      weeklyPercentage: Math.round((completedDays / dates.length) * 100)
+    };
+  });
+}
+
+export function buildWeeklyFeedback(chartData: WeeklyChartPoint[]): WeeklyFeedbackPoint[] {
+  return chartData.map((item) => ({
+    date: item.date,
+    label: item.label,
+    percentage: item.completionPercentage,
+    feedback:
+      item.completionPercentage >= 80
+        ? "Great"
+        : item.completionPercentage >= 50
+          ? "Good"
+          : item.completionPercentage >= 25
+            ? "Low"
+            : "Poor"
+  }));
 }
 
 export function buildDaySnapshot(logs: RoutineLog[], totalTasksPerDay: number): DaySnapshot {

@@ -31,6 +31,19 @@ export type WeeklyChartPoint = {
   successfulDay: boolean;
 };
 
+export type WeeklyTaskRow = {
+  taskName: string;
+  completionByDate: Record<string, boolean>;
+  weeklyPercentage: number;
+};
+
+export type WeeklyFeedbackPoint = {
+  date: string;
+  label: string;
+  percentage: number;
+  feedback: string;
+};
+
 export type WeeklySummary = {
   totalTasks: number;
   averageCompletion: number;

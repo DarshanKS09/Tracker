@@ -4,13 +4,21 @@ import { useEffect, useState } from "react";
 import { DailyChecklist } from "@/components/daily-checklist";
 import { DailyProgress } from "@/components/daily-progress";
 import { DashboardCharts } from "@/components/dashboard-charts";
-import type { DailyTaskItem } from "@/utils/types";
+import type { DailyTaskItem, WeeklyChartPoint, WeeklyFeedbackPoint } from "@/utils/types";
 
 type RoutineDashboardShellProps = {
+  today: string;
   initialTasks: DailyTaskItem[];
+  weeklyChartData: WeeklyChartPoint[];
+  weeklyFeedback: WeeklyFeedbackPoint[];
 };
 
-export function RoutineDashboardShell({ initialTasks }: RoutineDashboardShellProps) {
+export function RoutineDashboardShell({
+  today,
+  initialTasks,
+  weeklyChartData,
+  weeklyFeedback
+}: RoutineDashboardShellProps) {
   const [tasks, setTasks] = useState(initialTasks);
 
   useEffect(() => {
@@ -46,7 +54,12 @@ export function RoutineDashboardShell({ initialTasks }: RoutineDashboardShellPro
 
       <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <DailyChecklist tasks={tasks} onTasksChange={setTasks} />
-        <DashboardCharts tasks={tasks} />
+        <DashboardCharts
+          tasks={tasks}
+          today={today}
+          weeklyChartData={weeklyChartData}
+          weeklyFeedback={weeklyFeedback}
+        />
       </section>
     </>
   );
