@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Pencil, Plus, Trash2, UserRound, X } from "lucide-react";
-import type { RoutineSettings, RoutineTaskConfig, RoutineTaskType } from "@/utils/types";
+import { Pencil, Plus, Trash2, Upload, UserRound, X } from "lucide-react";
+import type { RoutineSettings, RoutineTaskConfig, RoutineTaskType, WeeklySummary } from "@/utils/types";
 
 type ProfileSettingsProps = {
   settings: RoutineSettings;
+  stats: WeeklySummary;
 };
 
 const taskTypes: RoutineTaskType[] = ["boolean", "duration", "water"];
@@ -20,7 +21,7 @@ function createEmptyRoutine(): RoutineTaskConfig {
   };
 }
 
-export function ProfileSettings({ settings }: ProfileSettingsProps) {
+export function ProfileSettings({ settings, stats }: ProfileSettingsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,6 +42,31 @@ export function ProfileSettings({ settings }: ProfileSettingsProps) {
         routineIndex === index ? { ...routine, ...nextPartial } : routine
       )
     }));
+  };
+
+  const handleAvatarFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file for the profile picture.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({
+        ...current,
+        profile: {
+          ...current.profile,
+          avatarUrl: typeof reader.result === "string" ? reader.result : current.profile.avatarUrl
+        }
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const saveSettings = async () => {
@@ -107,7 +133,7 @@ export function ProfileSettings({ settings }: ProfileSettingsProps) {
                 <p className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">Profile settings</p>
                 <h3 className="mt-2 text-2xl font-semibold text-white">Customize your routine space</h3>
                 <p className="mt-2 text-sm text-slate-400">
-                  Update your profile, change routine labels, and add or delete routine cards.
+                  Update your profile, check streaks, change routine labels, and add or delete routine cards.
                 </p>
               </div>
               <button
@@ -149,21 +175,52 @@ export function ProfileSettings({ settings }: ProfileSettingsProps) {
                       placeholder="Your name"
                     />
                   </label>
-                  <label className="grid gap-2 text-sm text-slate-300">
-                    Avatar URL
-                    <input
-                      value={form.profile.avatarUrl}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          profile: { ...current.profile, avatarUrl: event.target.value }
-                        }))
-                      }
-                      className="rounded-2xl border border-white/10 bg-surface-950 px-3 py-2 text-white outline-none ring-0"
-                      placeholder="https://..."
-                    />
-                  </label>
+                  <div className="grid gap-2 text-sm text-slate-300">
+                    Profile picture
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs uppercase tracking-[0.18em] text-cyan-100 transition hover:bg-cyan-400/15">
+                        <Upload className="h-4 w-4" />
+                        Choose file
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarFile}
+                          className="hidden"
+                        />
+                      </label>
+                      {form.profile.avatarUrl ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((current) => ({
+                              ...current,
+                              profile: { ...current.profile, avatarUrl: "" }
+                            }))
+                          }
+                          className="rounded-2xl border border-white/10 bg-surface-950 px-3 py-2 text-xs uppercase tracking-[0.18em] text-slate-300 transition hover:bg-white/5"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-slate-500">Pick an image from your device. It will be saved with your profile.</p>
+                  </div>
                 </div>
+              </div>
+            </section>
+
+            <section className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Current streak</p>
+                <p className="mt-2 text-2xl font-semibold text-fuchsia-200">{stats.currentStreak}</p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Longest streak</p>
+                <p className="mt-2 text-2xl font-semibold text-violet-200">{stats.longestStreak}</p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Average completion</p>
+                <p className="mt-2 text-2xl font-semibold text-emerald-200">{stats.averageCompletion}%</p>
               </div>
             </section>
 

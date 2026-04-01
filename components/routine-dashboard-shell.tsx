@@ -129,7 +129,7 @@ export function RoutineDashboardShell({
           </div>
           <div className="flex flex-col items-stretch gap-3 lg:items-end">
             <div className="self-end">
-              <ProfileSettings settings={settings} />
+              <ProfileSettings settings={settings} stats={stats} />
             </div>
             <div className="hidden lg:block">
               <DailyProgress
@@ -142,7 +142,7 @@ export function RoutineDashboardShell({
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:hidden">
-          <ProfileSettings settings={settings} />
+          <ProfileSettings settings={settings} stats={stats} />
           <DailyProgress
             completedCount={completedCount}
             percentage={percentage}
