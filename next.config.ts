@@ -1,9 +1,11 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   poweredByHeader: false,
+  outputFileTracingRoot: path.join(__dirname),
   async headers() {
     return [
       {
