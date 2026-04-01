@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Area,
   AreaChart,
-  Cell,
   CartesianGrid,
   Pie,
   PieChart,
@@ -21,19 +20,6 @@ type DashboardChartsProps = {
   weeklyChartData: WeeklyChartPoint[];
   weeklyFeedback: WeeklyFeedbackPoint[];
 };
-
-const ROUTINE_COLORS = [
-  "#22c55e",
-  "#38bdf8",
-  "#f97316",
-  "#eab308",
-  "#a855f7",
-  "#14b8a6",
-  "#ef4444",
-  "#06b6d4",
-  "#84cc16",
-  "#f43f5e"
-];
 
 function buildLiveWeeklyChart(
   weeklyChartData: WeeklyChartPoint[],
@@ -67,30 +53,6 @@ function getFeedbackLabel(percentage: number) {
   return "Poor";
 }
 
-function buildDailyDonutData(tasks: DailyTaskItem[]) {
-  return tasks.map((task, index) => {
-    const numericValue = task.taskType === "boolean" ? (task.completed ? 1 : 0.2) : Math.max(task.value, 0.1);
-
-    return {
-      name: task.taskName,
-      value: numericValue,
-      completed: task.completed,
-      unit: task.unit,
-      displayValue:
-        task.taskType === "boolean" ? (task.completed ? "Done" : "Not done") : formatTooltipValue(task.value, task.unit),
-      fill: ROUTINE_COLORS[index % ROUTINE_COLORS.length]
-    };
-  });
-}
-
-function formatTooltipValue(value: number, unit?: string) {
-  if (!unit) {
-    return value.toString();
-  }
-
-  return `${value.toFixed(1)} ${unit}`;
-}
-
 export function DashboardCharts({
   tasks,
   today,
@@ -99,7 +61,20 @@ export function DashboardCharts({
 }: DashboardChartsProps) {
   const [chartView, setChartView] = useState<"daily" | "weekly">("daily");
   const liveChartData = buildLiveWeeklyChart(weeklyChartData, tasks, today);
-  const dailyDonutData = buildDailyDonutData(tasks);
+  const completedCount = tasks.filter((task) => task.completed).length;
+  const completionPercentage = Math.round((completedCount / tasks.length) * 100);
+  const dailyDonutData = [
+    {
+      name: "Completed",
+      value: completedCount,
+      fill: "#22c55e"
+    },
+    {
+      name: "Remaining",
+      value: Math.max(tasks.length - completedCount, 0),
+      fill: "rgba(255,255,255,0.10)"
+    }
+  ];
   const liveFeedback = weeklyFeedback.map((item) => {
     if (item.date !== today) {
       return item;
@@ -161,34 +136,28 @@ export function DashboardCharts({
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-300">Daily routine coverage</p>
               <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-cyan-200">
-                {tasks.filter((task) => task.completed).length} done today
+                {completedCount} of {tasks.length} done
               </span>
             </div>
-            <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="h-80">
+            <div className="grid place-items-center">
+              <div className="relative h-80 w-full max-w-[340px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={dailyDonutData}
                       dataKey="value"
                       nameKey="name"
-                      innerRadius="58%"
-                      outerRadius="86%"
-                      paddingAngle={3}
+                      fill="#22c55e"
+                      innerRadius="70%"
+                      outerRadius="92%"
+                      startAngle={90}
+                      endAngle={-270}
+                      cornerRadius={10}
                       stroke="rgba(7,17,31,0.9)"
-                      strokeWidth={2}
-                    >
-                      {dailyDonutData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.fill} />
-                      ))}
-                    </Pie>
+                      strokeWidth={3}
+                    />
                     <Tooltip
-                      formatter={(value, _name, item) => {
-                        const payload = item.payload as {
-                          displayValue: string;
-                        };
-                        return [payload.displayValue, "Progress"];
-                      }}
+                      formatter={(value, name) => [`${value} routines`, name]}
                       contentStyle={{
                         backgroundColor: "#08111f",
                         border: "1px solid rgba(255,255,255,0.12)",
@@ -197,35 +166,12 @@ export function DashboardCharts({
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-
-              <div className="grid gap-2 self-center">
-                {dailyDonutData.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="h-3.5 w-3.5 rounded-full"
-                        style={{ backgroundColor: item.fill }}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-slate-100">{item.name}</p>
-                        <p className="text-xs text-slate-400">{item.displayValue}</p>
-                      </div>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em] ${
-                        item.completed
-                          ? "bg-emerald-400/15 text-emerald-200"
-                          : "bg-red-400/10 text-red-200"
-                      }`}
-                    >
-                      {item.completed ? "Done" : "Open"}
-                    </span>
-                  </div>
-                ))}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-5xl font-semibold text-white">{completionPercentage}%</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-400">
+                    Routine completion
+                  </p>
+                </div>
               </div>
             </div>
           </>
