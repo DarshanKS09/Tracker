@@ -32,8 +32,9 @@ export async function getRoutinePageData(selectedDateParam?: string) {
       .lean()
   ]);
 
-  const selectedLogs = serializeRoutineLogs(selectedLogsRaw);
-  const weekLogs = serializeRoutineLogs(weekLogsRaw);
+  const allowedTaskNames = new Set(settings.routines.map((task) => task.name));
+  const selectedLogs = serializeRoutineLogs(selectedLogsRaw).filter((log) => allowedTaskNames.has(log.taskName));
+  const weekLogs = serializeRoutineLogs(weekLogsRaw).filter((log) => allowedTaskNames.has(log.taskName));
 
   const dailyTasks = buildDailyTasks(selectedLogs, settings.routines);
   const completedCount = dailyTasks.filter((task) => task.completed).length;
