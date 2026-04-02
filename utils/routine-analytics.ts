@@ -18,7 +18,7 @@ type DaySnapshot = {
 };
 
 export function buildDailyTasks(logs: RoutineLog[], taskConfigs: RoutineTaskConfig[]) {
-  const taskMap = new Map(logs.map((log) => [log.taskName, log]));
+  const taskMap = buildLatestTaskMap(logs);
 
   return taskConfigs.map((task) => {
     const log = taskMap.get(task.name);
@@ -39,7 +39,7 @@ export function buildWeeklyChartData(logs: RoutineLog[], dates: string[], totalT
   const grouped = groupLogsByDate(logs);
 
   return dates.map((date) => {
-    const dayLogs = grouped.get(date) ?? [];
+    const dayLogs = Array.from(buildLatestTaskMap(grouped.get(date) ?? []).values());
     const completedTasks = dayLogs.filter((item) => item.completed).length;
     const completionPercentage = Math.round((completedTasks / totalTasksPerDay) * 100);
 
@@ -81,8 +81,8 @@ export function buildWeeklyTaskTable(
 
   return taskConfigs.map((task) => {
     const completionByDate = dates.reduce<Record<string, boolean>>((accumulator, date) => {
-      const dayLogs = grouped.get(date) ?? [];
-      const log = dayLogs.find((item) => item.taskName === task.name);
+      const dayLogs = buildLatestTaskMap(grouped.get(date) ?? []);
+      const log = dayLogs.get(task.name);
       accumulator[date] = log?.completed ?? false;
       return accumulator;
     }, {});
@@ -114,11 +114,12 @@ export function buildWeeklyFeedback(chartData: WeeklyChartPoint[]): WeeklyFeedba
 }
 
 export function buildDaySnapshot(logs: RoutineLog[], totalTasksPerDay: number): DaySnapshot {
-  const completedTasks = logs.filter((log) => log.completed).length;
+  const latestLogs = Array.from(buildLatestTaskMap(logs).values());
+  const completedTasks = latestLogs.filter((log) => log.completed).length;
   const completionPercentage = Math.round((completedTasks / totalTasksPerDay) * 100);
 
   return {
-    date: logs[0]?.date ?? "",
+    date: latestLogs[0]?.date ?? logs[0]?.date ?? "",
     completedTasks,
     totalTasks: totalTasksPerDay,
     completionPercentage,
@@ -164,4 +165,18 @@ function groupLogsByDate(logs: RoutineLog[]) {
   }
 
   return grouped;
+}
+
+function buildLatestTaskMap(logs: RoutineLog[]) {
+  const latestByTask = new Map<string, RoutineLog>();
+
+  for (const log of logs) {
+    const existing = latestByTask.get(log.taskName);
+
+    if (!existing || new Date(log.createdAt).getTime() >= new Date(existing.createdAt).getTime()) {
+      latestByTask.set(log.taskName, log);
+    }
+  }
+
+  return latestByTask;
 }
