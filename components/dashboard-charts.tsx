@@ -140,7 +140,7 @@ export function DashboardCharts({
       <div className="rounded-3xl border border-white/10 bg-black/20 p-3 sm:p-4">
         {chartView === "daily" ? (
           <>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-slate-300 sm:text-sm">Daily routine coverage</p>
               <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-200 sm:px-3 sm:py-1.5 sm:text-xs">
                 {completedCount} of {tasks.length} done
