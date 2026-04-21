@@ -101,7 +101,7 @@ export function DashboardCharts({
   );
 
   return (
-    <section className="panel flex flex-col gap-4 p-4 sm:p-5">
+    <section className="panel shadow-none flex flex-col gap-4 p-4 sm:p-5">
       <div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
